@@ -12,6 +12,8 @@ flowchart LR
         node1["Node 1 - Proxmox 8.4\n 48 x Intel Xeon E5-2680 (NUMA) + Quadro M2000 + 2.5G NIC"]
         node2["Node 2 - Proxmox 8.4\nXeon E5-2680 (NUMA)"]
     end
+    bridge --> node1
+    bridge --> node2
 
     subgraph standalone["Standalone Proxmox node"]
         node3["Node 3 - Proxmox 8.4\nQuadro M2000 + 2.5G NIC"]
