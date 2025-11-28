@@ -9,6 +9,7 @@ flowchart LR
     bridge["Proxmox Linux bridge (Wired connection)"]
 
     internet --> vpn --> bridge
+
     end
 
     subgraph standalone["Standalone Proxmox node"]
