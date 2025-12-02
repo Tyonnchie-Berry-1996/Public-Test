@@ -3,13 +3,20 @@
 This repo documents my current homelab built around Proxmox VE 8.4. Feel free to keep the diagram up in the background to get a visual: https://tyonnchie-berry-1996.github.io/Proxmox-Home-Lab-Setup/
 The core idea behind this setup is simple:
 
-<code>Resource utilization matters more than raw resource numbers.</code>
+<strong>
+<h3><code>Resource utilization matters more than raw resource numbers</code></h3>
+</strong>
 
-Instead of just throwing hardware at problems, I’m trying to:
+<p>I’ve always wondered: if you match the right architecture with the right Linux distro, can you allocate and utilize resources in a way that truly maximizes the efficiency of your machines? I also wanted to experiment with a type-1 hypervisor, because there were so many times I wanted to spin up a new project but felt restricted by a single host OS that hogged every resource for no good reason. Having a type-1 hypervisor changes that. It’s like being able to install VirtualBox or VMware as your <strong>actual</strong> operating system, and then build everything else on top of it.
+
+Proxmox VE takes that idea and turns your hardware architecture into a virtual environment that’s accessible through a web browser. It transforms a basic homelab into a homelab/cloud hybrid: a real test ground for learning systems, scripting, system administration, networking, Linux bridges, port forwarding, and more. It’s the kind of environment that feels very much like a **“for motivated wizards only”** playground.</p>
+
+
+Instead of just throwing hardware at problems, I’m aiming to:
 - Control the lifecycle of my machines
 - Stretch their usable lifespan
 - Learn how to allocate resources intentionally
-- Reduce wasted compute while still getting “feels high-end” performance
+- Reduce wasted compute while still getting “high-end”/maximizing the equipments performance.
 
 ---
 
