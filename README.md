@@ -22,7 +22,7 @@ Instead of just throwing hardware at problems, I’m aiming to:
 
 ## Specs at a Glance
 
-**Linux Distro:** Proxmox VE 8.4  
+**OS:** Proxmox VE 8.4  
 - **2-node Proxmox cluster**
 - **1 standalone Proxmox node** (outside the cluster)
 
