@@ -3,7 +3,7 @@
 This repo documents my current homelab built around Proxmox VE 8.4. Feel free to keep the diagram up in the background to get a visual: https://tyonnchie-berry-1996.github.io/Proxmox-Home-Lab-Setup/
 The core idea behind this setup is simple:
 
-> **Resource utilization matters more than raw resource numbers.**
+<code>Resource utilization matters more than raw resource numbers.</code>
 
 Instead of just throwing hardware at problems, I’m trying to:
 - Control the lifecycle of my machines
