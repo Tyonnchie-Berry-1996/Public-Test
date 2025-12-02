@@ -16,31 +16,31 @@ Instead of just throwing hardware at problems, I’m aiming to:
 - Control the lifecycle of my machines
 - Stretch their usable lifespan
 - Learn how to allocate resources intentionally
-- Reduce wasted compute while still getting “high-end”/maximizing the equipments performance.
+- Reduce wasted compute while still getting high-end performance out of the same equipment.
 
 ---
 
 ## Specs at a Glance
 
-**Hypervisor:** Proxmox VE 8.4  
-**Topology:**
+**Linux Distro:** Proxmox VE 8.4  
 - **2-node Proxmox cluster**
 - **1 standalone Proxmox node** (outside the cluster)
 
 **CPU & RAM (combined):**
 - **56 logical CPUs / 2 sockets total**
-  - 48 of them are **Intel Xeon E5-2680 @ 2.50 GHz** (NUMA-aware)
+- **Hyperthreading Enable**
+- **48 of them are Intel Xeon E5-2680 @ 2.50 GHz** (NUMA-aware)
 - **~250 GB RAM**
 
 **Storage:**
-- **Two NFS-backed storage pools** (~16 TB total)
-  - 8 TB NFS inside the cluster
+- **Two NFS-backed storage pools** (16 TB total)
+  - 8 TB NFS/LVM external drive inside the cluster
   - 8 TB “tri-directional” external drive outside the cluster
 
 **Other hardware:**
 - **GPU:** NVIDIA Quadro M2000 (PCIe passthrough)
-- **Network:** 2.5 Gbps-capable NIC
-- **Security / Edge:** VPN router + MAC filtering + DDNS
+- **Network:** 2.5 Gbps-capable NIC PCIe
+- **Security / Edge:** RT-AX86U Pro: VPN Profile + Firewall Rules + MAC filtering + DDNS + Port Forwarding 
 
 ---
 
@@ -48,7 +48,7 @@ Instead of just throwing hardware at problems, I’m aiming to:
 
 The first big shift for me was understanding **type-1 hypervisors**:
 
-> If you imagine VMware or VirtualBox *being* your OS instead of running inside one, that’s the idea behind a type-1 hypervisor.
+> If you imagine VMware or VirtualBox *being* your OS, that’s the idea behind a type-1 hypervisor.
 
 Running Proxmox directly on bare metal:
 - Frees the “host OS” from desktop overhead
@@ -57,34 +57,35 @@ Running Proxmox directly on bare metal:
 
 On paper, “48 CPUs” sounds like overkill. But:
 - Without hyperthreading, my Windows host would only see 24 cores
-- Windows isn’t exactly friendly about enabling and using hyperthreading efficiently
+- On bare-metal Windows, I often felt limited by how the system handled resources and background workloads, and enabling hyperthreading never gave me the same       sense of control I get with Proxmox. With a type-1 hypervisor, I can decide exactly how many vCPUs each VM gets and how threads are allocated, instead of          relying on a single host OS to make those decisions for everything.
 - With Proxmox, I can expose more logical CPUs to VMs and shape exactly how they’re used
 
-This setup let me learn:
-- When “more cores” actually helps
-- How NUMA affects VM placement
-- How to balance **vCPUs per VM** vs system responsiveness
+This setup has taught me a lot about how my hardware actually behaves, including:
+
+- When “more cores” actually makes a difference  
+- How NUMA impacts VM placement and performance  
+- How to balance **vCPUs per VM** against overall system responsiveness  
 
 ---
 
 ## Storage Architecture
 
-I use **two main 8 TB HDDs**, each with a specific role.
+I use **two main 8 TB external hard drives**, each with a specific role.
 
-### 1. Cluster NFS (8 TB, internal to the cluster)
+### 1. Cluster NFS/LVM External Drive (8 TB, internal to the cluster)
 
 This drive is attached to the cluster and formatted as **LVM**:
 
 - **5 TB LV:**  
   - Dedicated to **VM disks** and **ISO images**  
   - Exported via **NFS** to all cluster nodes  
-  - Acts as the main shared storage for the Proxmox cluster
+  - Acts as the main shared storage for the Proxmox cluster  
 
 - **3 TB (remaining LVM space):**  
   - Used as a **local fallback** storage pool  
-  - If NFS has issues, I still have space that can be mounted and used locally on the node
+  - If there’s an issue with NFS, I still have space that can be mounted and used locally on the node  
 
-This keeps “VM stuff” (disks + ISOs) centralized while still giving me a safety net.
+This keeps all the “VM stuff” (disks + ISOs) centralized, while still giving me a safety net.
 
 ---
 
@@ -99,22 +100,22 @@ This one is more experimental and has **three roles**:
 
 - **Mounted on a Proxmox node with a virtual ext4 layer**  
   - When attached to the standalone node, part of the drive is used as an **ext4 filesystem**  
-  - That ext4 layer is:
+  - That ext4 layer is a virutal file system:
     - Exported via **NFS** to the cluster as another storage backend
     - Mounted into VMs as a shared filesystem for file exchange
 
 - **Cloud drive backing storage (FileCloud VM)**  
   - Inside an Ubuntu VM, I run **FileCloud**
   - The **ext4 virtual layer** of the drive is mounted into this VM
-  - FileCloud exposes it as a **cloud drive** that can be reached from:
-    - My Proxmox cluster
+  - FileCloud exposes it as a 1TB **cloud drive** that can be reached from:
+    - My machines on the cluster
     - My personal computers
-    - Any other device that can access the FileCloud URL
+    - Any other device that has access to the VPN rotuer and a web browser
 
 In short, this 8 TB disk acts as:
 - A local external drive
 - A cluster-accessible NFS filesystem
-- Backing storage for a self-hosted “cloud drive”
+- Backing storage for a self-hosted “cloud drive” across the network
 
 ---
 
@@ -123,21 +124,26 @@ In short, this 8 TB disk acts as:
 I use **GPU passthrough** on the standalone Proxmox node for multiple workloads via the NVIDIA Quadro M2000:
 
 - **Windows VM**
-  - Game / console emulation (e.g., PCSX2)
+  - Game emulation (e.g., PCSX2, PPSSPP)
+  - Trading Algo's (MT4, MT5, oanda)
+  - Streaming Apps
   - General GPU-accelerated desktop usage
 
 - **Ubuntu Jellyfin VM**
-  - Live TV playback
-  - Hardware-accelerated decoding/encoding (transcoding) for media
+  - IPTV
+  - Movies and Shows
+  - Works as a local netflix but instead of using netflix's servers we use our own. Local installed media (shows & moives) and I make a custom m3u playlist for        IPTV. On the backend I use NextPVR for the m3u playlist
+  - Hardware-accelerated decoding/encoding (transcoding) for media playback and IPTV
 
 - **Kali Linux VM**
   - Light AI testing
   - Experiments with private GPT-style models / tools
 
-This lets a single mid-range GPU serve:
+This lets a single mid-range (unicorn) GPU serve:
 - Gaming
 - Transcoding
 - Light AI / tooling
+- IPTV hardware acceleration
 
 ---
 
@@ -149,13 +155,16 @@ Networking is built to balance **performance, control, and security**:
   - Used heavily for:
     - Live TV streaming
     - MetaTrader 4 (MT4) / trading workloads
+    - MetaTrader 5 (MT5) / trading workloads
+    - Oanda trading platform
+    - IPTV
     - Other high-bandwidth VM use cases
   - The higher throughput made it easier to comfortably assign **~5 vCPUs per VM** without the system feeling sluggish
 
 - **VPN Router + Linux Bridge**
   - The Proxmox **Linux bridge** is wired into a **VPN router**
   - **MAC filtering** is enabled so:
-    - Only devices I approve can reach the VMs and services
+    - Only devices I approve can reach the VMs and servers
     - This includes media devices (e.g., a Firestick) and personal machines
 
 - **DDNS + (future) port forwarding**
@@ -164,7 +173,6 @@ Networking is built to balance **performance, control, and security**:
     - Jellyfin / live TV
     - FileCloud
     - Other services I decide to publish
-
 ---
 
 ## NUMA and Resource Allocation
@@ -187,13 +195,10 @@ This approach:
 - Makes it easier to understand what’s actually needed for my workloads
 
 ---
-
-## TL;DR
-
-This lab is less about flexing specs and more about **learning discipline**:
+<h3>This lab is less about flexing specs and more about **learning discipline**:</h3>
 
 - Use a type-1 hypervisor (Proxmox) to turn hardware into a flexible resource pool
-- Centralize VM storage with NFS, but keep smart local fallbacks
+- Centralize and manage VM storage with NFS, but keep smart local fallbacks
 - Reuse the same disks in multiple roles (local, NFS, cloud drive)
 - Share a single GPU across gaming, media, and light AI
 - Wrap it all in sane networking, MAC filtering, and DDNS access
