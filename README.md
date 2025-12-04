@@ -165,12 +165,12 @@ Networking is built to balance **performance, control, and security**:
   - The higher throughput made it easier to comfortably assign **~5 vCPUs per VM** without the system feeling sluggish
   - With the windows machine I need more than 5 vCPUs but that's the only machine that I tune or max out resources on     occasionally
   - Escpecially with PS2 & PSP emulation you have to pump up the resources
-- **VPN Router
+- **VPN Router**
   - **MAC filtering** is enabled so:
     - Only devices I approve can reach the VMs and servers
     - This includes media devices (e.g., a Firestick) and personal machines
 
-- **DDNS + (future) port forwarding**
+- **(future) port forwarding**
   - Next step: clean **port-forwarding** rules on the VPN router to selectively expose:
     - Jellyfin / live TV
     - FileCloud
